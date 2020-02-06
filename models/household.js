@@ -6,12 +6,6 @@ const householdschema = new mongoose.Schema({
     }
 })
 
-householdschema.virtual('familymembers', {
-    ref: 'FamilyMember',
-    localField: '_id',
-    //id is referencing the owner property in task which is also an objectID
-    foreignField: 'owner'
-})
 
 householdschema.virtual('familymembers', {
     ref: 'FamilyMember',
