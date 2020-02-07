@@ -44,7 +44,11 @@ router.get("/households", async (req, res) => {
     .exec();
 
   res.status(200).json({
-    list: households.map(({ _id, HousingType, familymembers }) => {
+    list: households.map(({
+      _id,
+      HousingType,
+      familymembers
+    }) => {
       return {
         _id,
         HousingType,
@@ -61,24 +65,58 @@ router.get("/household/:id", async (req, res) => {
       path: "familymembers"
     })
     .execPopulate();
-  const { HousingType, familymembers } = household;
+  const {
+    HousingType,
+    familymembers
+  } = household;
   res.send({
     HousingType,
     familymembers
   });
 });
 
-router.get("/disbursement", async (req, res) => {
-  const queryObj = req.query;
-  const members = await FamilyMember.find({});
-  const selectedMember = members.filter(member => {
-    const age = parseInt(moment(member.DOB).fromNow());
-    return age > 50;
-  });
-  console.log(selectedMember);
+const groupBy = key => array =>
+  array.reduce((objectsByKeyValue, obj) => {
+    const value = obj[key];
+    objectsByKeyValue[value] = (objectsByKeyValue[value] || []).concat(obj);
+    return objectsByKeyValue;
+  }, {});
 
-  res.json({
-      
-  })
+
+
+
+router.get("/disbursement", async (req, res) => {
+  const allFamilies = await FamilyMember.find();
+  let selectedFamilies = []
+  const groupByID = groupBy('household_id')
+  if (req.query.age == "50") {
+    selectedFamilies = allFamilies.filter((family) => {
+      const age = parseInt(moment(family.DOB).fromNow())
+      return age > parseInt(req.query.age)
+
+    })
+    const grouped = groupByID(selectedFamilies)
+    res.send({
+      ElderBonus: grouped
+    })
+  } else if (req.query.age == "5") {
+    selectedFamilies = allFamilies.filter((family) => {
+      const diff = moment(family.DOB).diff(moment());
+      const duration = moment.duration(diff)
+      const age = Math.abs(duration.years())
+      return age < parseInt(req.query.age)
+
+    })
+    const grouped = groupByID(selectedFamilies)
+    res.send({
+      BabySunshineGrant: grouped
+    })
+
+
+
+
+  }
+
 });
+
 module.exports = router;
