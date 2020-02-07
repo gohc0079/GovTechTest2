@@ -3,6 +3,11 @@ const router = express.Router();
 const FamilyMember = require("../models/familymember");
 const Household = require("../models/household");
 const moment = require("moment");
+const {
+  generateandPushArrObject,
+  jsonObject,
+  groupBy
+} = require("../utils/reusables")
 router.post("/familymember/:household_id", async (req, res) => {
   const household_id = req.params.household_id;
   const familymember = new FamilyMember({
@@ -20,23 +25,6 @@ router.post("/familymember/:household_id", async (req, res) => {
 });
 
 router.get("/households", async (req, res) => {
-  // Household.find().populate({
-  //     path: "familymembers"
-  // }).exec().then(households => {
-  //     res.status(200).json({
-  //         temp: households.map(({
-  //             _id,
-  //             HousingType,
-  //             familymembers
-  //         }) => {
-  //             return {
-  //                 _id,
-  //                 HousingType,
-  //                 familymembers,
-  //             }
-  //         })
-  //     })
-  // })
   const households = await Household.find()
     .populate({
       path: "familymembers"
@@ -75,47 +63,101 @@ router.get("/household/:id", async (req, res) => {
   });
 });
 
-const groupBy = key => array =>
-  array.reduce((objectsByKeyValue, obj) => {
-    const value = obj[key];
-    objectsByKeyValue[value] = (objectsByKeyValue[value] || []).concat(obj);
-    return objectsByKeyValue;
-  }, {});
-
-
-
-
 router.get("/disbursement", async (req, res) => {
   const allFamilies = await FamilyMember.find();
-  let selectedFamilies = []
-  const groupByID = groupBy('household_id')
+  let selectedFamilies = [];
+  const groupByID = groupBy("household_id");
   if (req.query.age == "50") {
-    selectedFamilies = allFamilies.filter((family) => {
-      const age = parseInt(moment(family.DOB).fromNow())
-      return age > parseInt(req.query.age)
-
+    const date = moment()
+      .subtract(50, "years")
+      .toISOString();
+    selectedFamilies = await FamilyMember.find({
+      DOB: {
+        $lt: date
+      }
     })
-    const grouped = groupByID(selectedFamilies)
+    const grouped = groupByID(selectedFamilies);
     res.send({
       ElderBonus: grouped
-    })
-  } else if (req.query.age == "5") {
-    selectedFamilies = allFamilies.filter((family) => {
-      const diff = moment(family.DOB).diff(moment());
-      const duration = moment.duration(diff)
-      const age = Math.abs(duration.years())
-      return age < parseInt(req.query.age)
+    });
 
+  } else if (req.query.age == "5") {
+    const date = moment()
+      .subtract(5, "years")
+      .toISOString();
+
+    selectedFamilies = await FamilyMember.find({
+      DOB: {
+        $gt: date
+      }
     })
-    const grouped = groupByID(selectedFamilies)
+    const grouped = groupByID(selectedFamilies);
     res.send({
       BabySunshineGrant: grouped
+    });
+
+  } else if (req.query.totalincome == "100000") {
+    FamilyMember.aggregate([{
+        $group: {
+          _id: "$household_id",
+          totalincome: {
+            $sum: "$AnnualIncome"
+          }
+        }
+      },
+      {
+        $match: {
+          totalincome: {
+            $lt: parseInt(req.query.totalincome)
+          }
+        }
+      }
+    ]).exec((e, r) => {
+      let array = [];
+      r.forEach(doc => {
+        const data = allFamilies.filter(family => {
+          return family.household_id == String(doc._id);
+        });
+        generateandPushArrObject(doc._id, doc.totalincome, data, array)
+      });
+      res.json(jsonObject(array));
+    });
+  } else if (req.query.age == "16" && req.query.totalincome == "150000") {
+    const date = moment()
+      .subtract(16, "years")
+      .toISOString();
+    FamilyMember.aggregate([{
+        $group: {
+          _id: "$household_id",
+          totalincome: {
+            $sum: "$AnnualIncome"
+          }
+        }
+      }, {
+        $match: {
+          totalincome: {
+            $lt: parseInt(req.query.totalincome)
+          }
+
+        }
+      }
+
+    ]).exec((e, r) => {
+      let array = [];
+      r.forEach((doc) => {
+        const data = allFamilies.filter(family => {
+          const age = moment(family.DOB).toISOString()
+          return (family.household_id == String(doc._id) && age > date)
+        });
+        generateandPushArrObject(doc._id, doc.totalincome, data, array)
+      })
+      res.json(jsonObject(array));
+
     })
 
-
-
-
   }
+
+
 
 });
 
