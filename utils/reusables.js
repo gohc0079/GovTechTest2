@@ -1,7 +1,6 @@
-const generateandPushArrObject = (id, totalAmt, data, arr) => {
+const generateandPushArrObject = (id, data, arr) => {
     const familyObj = {};
     if (data.length > 0) {
-        familyObj.total = totalAmt
         familyObj.household = id;
         familyObj.families = data;
         arr.push(familyObj)
@@ -12,13 +11,11 @@ const generateandPushArrObject = (id, totalAmt, data, arr) => {
 const jsonObject = (array) => {
 
     const resObject = array.map(({
-        total,
         household,
         families
     }) => {
         return {
             household,
-            total,
             families
         }
     })
