@@ -18,7 +18,8 @@ Api documentation
 2. Creating family member and adding to a house hold: POST /familymember/:household_id
 3. Get all households with family members : GET /households
 4. Get a household : GET /household/:id
-5. Disbursement awards
+5. Update the spouse value of a family member: PUT /familymember/:_id
+6. Disbursement awards
    ElderBonus - GET /disbursement?age=50
    BabySunshineGrant - GET / disbursement?age=5
    YOLOGSTGrant - GET/ disbursement?totalincome=100000

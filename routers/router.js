@@ -67,6 +67,19 @@ router.get("/household/:id", async (req, res) => {
   });
 });
 
+router.put("/familymember/:id", async (req, res) => {
+  try {
+    const Spouse = req.params.id;
+    const found = await FamilyMember.findById(Spouse);
+    const spouse = await FamilyMember.findOne({ Spouse });
+    found["Spouse"] = spouse._id;
+    const result = await found.save();
+    res.send({ result });
+  } catch (e) {
+    res.send({ error: e });
+  }
+});
+
 router.get("/disbursement", async (req, res) => {
   const allFamilies = await FamilyMember.find();
   let selectedFamilies = [];
@@ -231,7 +244,15 @@ router.get("/disbursement", async (req, res) => {
                       $eq: ["$$id", "$household_id"]
                     },
                     {
-                      $gt: ["$DOB", new Date(date)]
+                      $or: [
+                        { $gt: ["$DOB", new Date(date)] },
+                        {
+                          $and: [
+                            { $gt: ["$Spouse", null] },
+                            { $eq: ["$MaritalStatus", "married"] }
+                          ]
+                        }
+                      ]
                     }
                   ]
                 }
@@ -242,41 +263,17 @@ router.get("/disbursement", async (req, res) => {
         }
       }
     ]).exec((e, r) => {
-      r.forEach((family, i) => {
-        if (family.result.length > 0) {
-          const husbandarr = allFamilies.filter(member => {
-            return (
-              member.Spouse &&
-              family._id == String(member.household_id) &&
-              member.MaritalStatus == req.query.status
-            );
-          });
-          family.result.push(...husbandarr);
-          husbandarr.forEach(husband => {
-            const wife = allFamilies.find(member => {
-              return (
-                member._id == String(husband.Spouse) &&
-                member.MaritalStatus == req.query.status
-              );
-            });
-            family.result.push(wife);
-          });
-        }
-      });
-      selectedFamilies = r.filter(data => {
-        const count = data.result.filter(item => {
-          return item.MaritalStatus == req.query.status;
+      selectedFamilies = r.filter(family => {
+        const couple = family.result.filter(item => {
+          return item.Spouse;
         });
-        return count.length > 1;
+
+        return couple.length > 1;
       });
       res.json({
         FamilyTogetherness: selectedFamilies.map(
           ({ _id, HousingType, result }) => {
-            return {
-              _id,
-              HousingType,
-              result
-            };
+            return { _id, HousingType, result };
           }
         )
       });
