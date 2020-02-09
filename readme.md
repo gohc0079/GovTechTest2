@@ -23,4 +23,4 @@ Api documentation
    BabySunshineGrant - GET / disbursement?age=5
    YOLOGSTGrant - GET/ disbursement?totalincome=100000
    Student Encouragement - GET/ disbursement?age=16&totalincome=150000&occupation=student
-   Family Togetherness - GET /disbursement?age=18&spouse=true
+   Family Togetherness - GET /disbursement?age=18&status=married
