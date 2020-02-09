@@ -32,11 +32,7 @@ router.get("/households", async (req, res) => {
     .exec();
 
   res.status(200).json({
-    list: households.map(({
-      _id,
-      HousingType,
-      familymembers
-    }) => {
+    list: households.map(({ _id, HousingType, familymembers }) => {
       return {
         _id,
         HousingType,
@@ -53,10 +49,7 @@ router.get("/household/:id", async (req, res) => {
       path: "familymembers"
     })
     .execPopulate();
-  const {
-    HousingType,
-    familymembers
-  } = household;
+  const { HousingType, familymembers } = household;
   res.send({
     HousingType,
     familymembers
@@ -72,102 +65,109 @@ router.get("/disbursement", async (req, res) => {
     const date = moment()
       .subtract(parseInt(req.query.age), "years")
       .toISOString();
-    Household.aggregate([{
-      $lookup: {
-        from: 'familymembers',
-        let: {
-          id: "$_id"
-        },
-        pipeline: [{
-          $match: {
-            $expr: {
-              $and: [{
-                $eq: ["$$id", "$household_id"]
-              }, {
-                $lt: ["$DOB", new Date(date)]
-              }]
+    Household.aggregate([
+      {
+        $lookup: {
+          from: "familymembers",
+          let: {
+            id: "$_id"
+          },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $and: [
+                    {
+                      $eq: ["$$id", "$household_id"]
+                    },
+                    {
+                      $lt: ["$DOB", new Date(date)]
+                    }
+                  ]
+                }
+              }
             }
-          }
-        }],
-        as: "result"
+          ],
+          as: "result"
+        }
       }
-    }]).exec((e, result) => {
-
+    ]).exec((e, result) => {
       const ElderBonus = result.filter(item => {
-        return item.result.length > 0
-      })
+        return item.result.length > 0;
+      });
       res.json({
         ElderBonus
-      })
-
-
-    })
-
+      });
+    });
   } else if (req.query.age == "5") {
     const date = moment()
       .subtract(5, "years")
       .toISOString();
-    Household.aggregate([{
-      $lookup: {
-        from: 'familymembers',
-        let: {
-          id: "$_id"
-        },
-        pipeline: [{
-          $match: {
-            $expr: {
-              $and: [{
-                $eq: ["$$id", "$household_id"]
-              }, {
-                $gt: ["$DOB", new Date(date)]
-              }]
+    Household.aggregate([
+      {
+        $lookup: {
+          from: "familymembers",
+          let: {
+            id: "$_id"
+          },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $and: [
+                    {
+                      $eq: ["$$id", "$household_id"]
+                    },
+                    {
+                      $gt: ["$DOB", new Date(date)]
+                    }
+                  ]
+                }
+              }
             }
-          }
-        }],
-        as: "result"
+          ],
+          as: "result"
+        }
       }
-    }]).exec((e, result) => {
+    ]).exec((e, result) => {
       const BabySunshineGrant = result.filter(item => {
-        return item.result.length > 0
-      })
+        return item.result.length > 0;
+      });
       res.json({
         BabySunshineGrant
-      })
-    })
-
+      });
+    });
   } else if (req.query.totalincome == "100000") {
     const households = await Household.find()
       .populate({
         path: "familymembers"
       })
       .exec();
-    let initialIncome = 0
+    let initialIncome = 0;
     const selectedFamilies = households.filter(household => {
       const sum = household.familymembers.reduce((total, household) => {
-        return total + household.AnnualIncome
-      }, initialIncome)
+        return total + household.AnnualIncome;
+      }, initialIncome);
 
-      return sum < 100000 && household.familymembers.length > 0
-
-    })
+      return sum < 100000 && household.familymembers.length > 0;
+    });
     res.json({
-      YOLOGSTGrant: selectedFamilies.map(({
-        _id,
-        HousingType,
-        familymembers
-      }) => {
-        return {
-          _id,
-          HousingType,
-          familymembers
+      YOLOGSTGrant: selectedFamilies.map(
+        ({ _id, HousingType, familymembers }) => {
+          return {
+            _id,
+            HousingType,
+            familymembers
+          };
         }
-      })
-    })
+      )
+    });
   } else if (req.query.age == "16" && req.query.totalincome == "150000") {
     const date = moment()
       .subtract(parseInt(req.query.age), "years")
       .toISOString();
-    FamilyMember.aggregate([{
+    FamilyMember.aggregate([
+      {
         $group: {
           _id: "$household_id",
           totalincome: {
@@ -197,43 +197,62 @@ router.get("/disbursement", async (req, res) => {
     const date = moment()
       .subtract(18, "years")
       .toISOString();
-    Household.aggregate([{
-      $lookup: {
-        from: "familymembers",
-        localField: "_id",
-        foreignField: "household_id",
-        as: "families"
-      }
-
-    }]).exec((e, r) => {
-      let array = []
-      r.forEach((family) => {
-        const firstCond = family.families.filter(data => {
-          const age = moment(data.DOB).toISOString()
-          return age > date || data.Spouse
-
-        })
-        firstCond.forEach((result) => {
-          if (result.Spouse) {
-
-            const found = family.families.find((member) => {
-              return member._id == String(result.Spouse)
-
-
-            })
-            firstCond.push(found)
-          }
-        })
-
-        if (firstCond.length > 2) {
-          generateandPushArrObject(family._id, firstCond, array)
-
+    Household.aggregate([
+      {
+        $lookup: {
+          from: "familymembers",
+          let: {
+            id: "$_id"
+          },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $and: [
+                    {
+                      $eq: ["$$id", "$household_id"]
+                    },
+                    {
+                      $gt: ["$DOB", new Date(date)]
+                    }
+                  ]
+                }
+              }
+            }
+          ],
+          as: "result"
         }
+      }
+    ]).exec((e, r) => {
+      // console.log(r);
+      r.forEach((family, i) => {
+        if (family.result.length > 0) {
+          const husbandarr = allFamilies.filter(member => {
+            return member.Spouse && family._id == String(member.household_id);
+          });
+          family.result.push(...husbandarr);
+          husbandarr.forEach(husband => {
+            const wife = allFamilies.find(member => {
+              return member._id == String(husband.Spouse);
+            });
+            family.result.push(wife);
+          });
+        }
+      });
+      selectedFamilies = r.filter(data => {
+        return data.result.length > 0;
+      });
 
-      })
-
-      res.json(jsonObject(array))
-    })
+      res.json({
+        list: selectedFamilies.map(({ _id, HousingType, result }) => {
+          return {
+            _id,
+            HousingType,
+            result
+          };
+        })
+      });
+    });
   }
 });
 
