@@ -5,9 +5,23 @@ const Household = require("../models/household");
 const moment = require("moment");
 const {
   generateandPushArrObject,
-  jsonObject,
-  groupBy
+  jsonObject
 } = require("../utils/reusables");
+
+router.post("/households", async (req, res) => {
+  const household = new Household(req.body);
+  try {
+    await household.save();
+    res.send({
+      household
+    });
+  } catch (e) {
+    res.status(404).send({
+      error: "Household Item not saved"
+    });
+  }
+});
+
 router.post("/familymember/:household_id", async (req, res) => {
   const household_id = req.params.household_id;
   const familymember = new FamilyMember({
@@ -59,7 +73,6 @@ router.get("/household/:id", async (req, res) => {
 router.get("/disbursement", async (req, res) => {
   const allFamilies = await FamilyMember.find();
   let selectedFamilies = [];
-  const groupByID = groupBy("household_id");
 
   if (req.query.age == "50") {
     const date = moment()
