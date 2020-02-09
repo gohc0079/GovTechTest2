@@ -206,7 +206,7 @@ router.get("/disbursement", async (req, res) => {
       });
       res.json(jsonObject(array));
     });
-  } else if (req.query.age == "18" && req.query.spouse == "true") {
+  } else if (req.query.age == "18" && req.query.status == "married") {
     const date = moment()
       .subtract(18, "years")
       .toISOString();
@@ -235,12 +235,12 @@ router.get("/disbursement", async (req, res) => {
       r.forEach((family, i) => {
         if (family.result.length > 0) {
           const husbandarr = allFamilies.filter(member => {
-            return member.Spouse && family._id == String(member.household_id) && member.MaritalStatus !== "divorce";
+            return member.Spouse && family._id == String(member.household_id) && member.MaritalStatus == req.query.status;
           });
           family.result.push(...husbandarr);
           husbandarr.forEach(husband => {
             const wife = allFamilies.find(member => {
-              return member._id == String(husband.Spouse) && member.MaritalStatus !== "divorce";
+              return member._id == String(husband.Spouse) && member.MaritalStatus == req.query.status;
             });
             family.result.push(wife);
           });
