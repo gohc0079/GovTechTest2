@@ -46,7 +46,11 @@ router.get("/households", async (req, res) => {
     .exec();
 
   res.status(200).json({
-    list: households.map(({ _id, HousingType, familymembers }) => {
+    list: households.map(({
+      _id,
+      HousingType,
+      familymembers
+    }) => {
       return {
         _id,
         HousingType,
@@ -63,7 +67,10 @@ router.get("/household/:id", async (req, res) => {
       path: "familymembers"
     })
     .execPopulate();
-  const { HousingType, familymembers } = household;
+  const {
+    HousingType,
+    familymembers
+  } = household;
   res.send({
     HousingType,
     familymembers
@@ -78,33 +85,28 @@ router.get("/disbursement", async (req, res) => {
     const date = moment()
       .subtract(parseInt(req.query.age), "years")
       .toISOString();
-    Household.aggregate([
-      {
-        $lookup: {
-          from: "familymembers",
-          let: {
-            id: "$_id"
-          },
-          pipeline: [
-            {
-              $match: {
-                $expr: {
-                  $and: [
-                    {
-                      $eq: ["$$id", "$household_id"]
-                    },
-                    {
-                      $lt: ["$DOB", new Date(date)]
-                    }
-                  ]
+    Household.aggregate([{
+      $lookup: {
+        from: "familymembers",
+        let: {
+          id: "$_id"
+        },
+        pipeline: [{
+          $match: {
+            $expr: {
+              $and: [{
+                  $eq: ["$$id", "$household_id"]
+                },
+                {
+                  $lt: ["$DOB", new Date(date)]
                 }
-              }
+              ]
             }
-          ],
-          as: "result"
-        }
+          }
+        }],
+        as: "result"
       }
-    ]).exec((e, result) => {
+    }]).exec((e, result) => {
       const ElderBonus = result.filter(item => {
         return item.result.length > 0;
       });
@@ -116,33 +118,28 @@ router.get("/disbursement", async (req, res) => {
     const date = moment()
       .subtract(5, "years")
       .toISOString();
-    Household.aggregate([
-      {
-        $lookup: {
-          from: "familymembers",
-          let: {
-            id: "$_id"
-          },
-          pipeline: [
-            {
-              $match: {
-                $expr: {
-                  $and: [
-                    {
-                      $eq: ["$$id", "$household_id"]
-                    },
-                    {
-                      $gt: ["$DOB", new Date(date)]
-                    }
-                  ]
+    Household.aggregate([{
+      $lookup: {
+        from: "familymembers",
+        let: {
+          id: "$_id"
+        },
+        pipeline: [{
+          $match: {
+            $expr: {
+              $and: [{
+                  $eq: ["$$id", "$household_id"]
+                },
+                {
+                  $gt: ["$DOB", new Date(date)]
                 }
-              }
+              ]
             }
-          ],
-          as: "result"
-        }
+          }
+        }],
+        as: "result"
       }
-    ]).exec((e, result) => {
+    }]).exec((e, result) => {
       const BabySunshineGrant = result.filter(item => {
         return item.result.length > 0;
       });
@@ -166,7 +163,11 @@ router.get("/disbursement", async (req, res) => {
     });
     res.json({
       YOLOGSTGrant: selectedFamilies.map(
-        ({ _id, HousingType, familymembers }) => {
+        ({
+          _id,
+          HousingType,
+          familymembers
+        }) => {
           return {
             _id,
             HousingType,
@@ -175,12 +176,11 @@ router.get("/disbursement", async (req, res) => {
         }
       )
     });
-  } else if (req.query.age == "16" && req.query.totalincome == "150000") {
+  } else if (req.query.age == "16" && req.query.totalincome == "150000" && req.query.occupation == "student") {
     const date = moment()
       .subtract(parseInt(req.query.age), "years")
       .toISOString();
-    FamilyMember.aggregate([
-      {
+    FamilyMember.aggregate([{
         $group: {
           _id: "$household_id",
           totalincome: {
@@ -200,7 +200,7 @@ router.get("/disbursement", async (req, res) => {
       r.forEach(doc => {
         const data = allFamilies.filter(family => {
           const age = moment(family.DOB).toISOString();
-          return family.household_id == String(doc._id) && age > date;
+          return family.household_id == String(doc._id) && age > date && family.OccupationType == req.query.occupation;
         });
         generateandPushArrObject(doc._id, data, array);
       });
@@ -210,54 +210,52 @@ router.get("/disbursement", async (req, res) => {
     const date = moment()
       .subtract(18, "years")
       .toISOString();
-    Household.aggregate([
-      {
-        $lookup: {
-          from: "familymembers",
-          let: {
-            id: "$_id"
-          },
-          pipeline: [
-            {
-              $match: {
-                $expr: {
-                  $and: [
-                    {
-                      $eq: ["$$id", "$household_id"]
-                    },
-                    {
-                      $gt: ["$DOB", new Date(date)]
-                    }
-                  ]
+    Household.aggregate([{
+      $lookup: {
+        from: "familymembers",
+        let: {
+          id: "$_id"
+        },
+        pipeline: [{
+          $match: {
+            $expr: {
+              $and: [{
+                  $eq: ["$$id", "$household_id"]
+                },
+                {
+                  $gt: ["$DOB", new Date(date)]
                 }
-              }
+              ]
             }
-          ],
-          as: "result"
-        }
+          }
+        }],
+        as: "result"
       }
-    ]).exec((e, r) => {
-      // console.log(r);
+    }]).exec((e, r) => {
       r.forEach((family, i) => {
         if (family.result.length > 0) {
           const husbandarr = allFamilies.filter(member => {
-            return member.Spouse && family._id == String(member.household_id);
+            return member.Spouse && family._id == String(member.household_id) && member.MaritalStatus !== "divorce";
           });
           family.result.push(...husbandarr);
           husbandarr.forEach(husband => {
             const wife = allFamilies.find(member => {
-              return member._id == String(husband.Spouse);
+              return member._id == String(husband.Spouse) && member.MaritalStatus !== "divorce";
             });
             family.result.push(wife);
           });
         }
       });
       selectedFamilies = r.filter(data => {
-        return data.result.length > 0;
+        return data.result.length > 2;
       });
 
       res.json({
-        list: selectedFamilies.map(({ _id, HousingType, result }) => {
+        list: selectedFamilies.map(({
+          _id,
+          HousingType,
+          result
+        }) => {
           return {
             _id,
             HousingType,
