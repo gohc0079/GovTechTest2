@@ -82,10 +82,14 @@ router.put("/familymember/:id", async (req, res) => {
     const Spouse = req.params.id;
     const body = req.body;
     const found = await FamilyMember.findById(Spouse);
+    const partner = await FamilyMember.findById(body.Spouse)
+    partner["Spouse"] = Spouse
     Object.assign(found, body);
     const result = await found.save();
+    const otherhalf = await partner.save()
     res.send({
-      result
+      result,
+      otherhalf
     });
   } catch (e) {
     res.send({
@@ -276,7 +280,7 @@ router.get("/disbursement", async (req, res) => {
         const chilren = family.result.filter(item => {
           return !couple.includes(item);
         });
-        return (couple.length > 1) & (chilren.length > 0);
+        return (couple.length > 1) & (couple.length % 2 == 0) & (chilren.length > 0);
       });
       res.send({
         FamilyTogetherness: selectedFamilies.map(

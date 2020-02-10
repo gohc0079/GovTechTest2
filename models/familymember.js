@@ -38,7 +38,7 @@ const memberschema = new mongoose.Schema({
     },
     OccupationType: {
         type: String,
-        required: false,
+        required: true,
         lowercase: true,
         trim: true,
         validate(value) {
