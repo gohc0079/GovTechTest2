@@ -45,7 +45,7 @@ router.get("/households", async (req, res) => {
     })
     .exec();
 
-  res.status(200).json({
+  res.send({
     list: households.map(({
       _id,
       HousingType,
@@ -80,14 +80,13 @@ router.get("/household/:id", async (req, res) => {
 router.put("/familymember/:id", async (req, res) => {
   try {
     const Spouse = req.params.id;
-    const body = req.body
+    const body = req.body;
     const found = await FamilyMember.findById(Spouse);
-    Object.assign(found, body)
+    Object.assign(found, body);
     const result = await found.save();
     res.send({
       result
     });
-
   } catch (e) {
     res.send({
       error: e
@@ -128,7 +127,7 @@ router.get("/disbursement", async (req, res) => {
       const ElderBonus = result.filter(item => {
         return item.result.length > 0;
       });
-      res.json({
+      res.send({
         ElderBonus
       });
     });
@@ -161,7 +160,7 @@ router.get("/disbursement", async (req, res) => {
       const BabySunshineGrant = result.filter(item => {
         return item.result.length > 0;
       });
-      res.json({
+      res.send({
         BabySunshineGrant
       });
     });
@@ -179,7 +178,7 @@ router.get("/disbursement", async (req, res) => {
 
       return sum < 100000 && household.familymembers.length > 0;
     });
-    res.json({
+    res.send({
       YOLOGSTGrant: selectedFamilies.map(
         ({
           _id,
@@ -230,7 +229,7 @@ router.get("/disbursement", async (req, res) => {
         });
         generateandPushArrObject(doc._id, data, array);
       });
-      res.json(jsonObject(array));
+      res.send(jsonObject(array));
     });
   } else if (req.query.age == "18" && req.query.status == "married") {
     const date = moment()
@@ -274,10 +273,12 @@ router.get("/disbursement", async (req, res) => {
         const couple = family.result.filter(item => {
           return item.Spouse;
         });
-
-        return couple.length > 1;
+        const chilren = family.result.filter(item => {
+          return !couple.includes(item);
+        });
+        return (couple.length > 1) & (chilren.length > 0);
       });
-      res.json({
+      res.send({
         FamilyTogetherness: selectedFamilies.map(
           ({
             _id,

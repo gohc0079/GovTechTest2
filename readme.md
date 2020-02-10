@@ -23,5 +23,5 @@ Api documentation
    ElderBonus - GET /disbursement?age=50
    BabySunshineGrant - GET / disbursement?age=5
    YOLOGSTGrant - GET/ disbursement?totalincome=100000
-   Student Encouragement - GET/ disbursement?age=16&totalincome=150000&occupation=student
-   Family Togetherness - GET /disbursement?age=18&status=married
+   Student Encouragement - GET/ disbursement?age=16&totalincome=150000&occupation=student(assumptions : qualifying members must be a student)
+   Family Togetherness - GET /disbursement?age=18&status=married (assumtions: couple in the household must have a spouse and cannot be divorced or single )
